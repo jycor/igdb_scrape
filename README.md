@@ -10,3 +10,6 @@ SECRET=your_secret
 Run `python get_auth.py` to get the access token (it will be saved in `.env`).
 
 Run with `python3 scrape.py`.
+
+If you ever need to reset something, just delete any generated `.pkl` files.
+Delete the `.json` files too for a hard reset.
