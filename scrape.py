@@ -188,9 +188,6 @@ where id > {start_id} & id <= {end_id};
 limit {batch_size};
 """
 
-# TODO: testing
-BATCH_SIZE = 3
-LAST_GAME_ID = 10
 all_games = []
 def get_game_batch(start, end, batch_size=BATCH_SIZE):
     query = GAME_QUERY.format(start_id=start, end_id=end, batch_size=batch_size)
