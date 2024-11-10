@@ -207,16 +207,18 @@ def get_game_batch(start, end, batch_size=BATCH_SIZE):
     if response.status_code != 200:
         print("GAME QUERY FAILED WITH:", response.status_code)
         print(response.json())
-        return
+        return None
     games = response.json()
     games_cache.extend(games)
     last_id = max([game["id"] for game in games])
-
     return games
 
 # Get everything
 for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
     batch = get_game_batch(i, i+BATCH_SIZE)
+    if batch == None:
+        print("FAILED TO GET BATCH")
+        exit(1)
     for game in batch:
         get_cover(game["cover"])
         for company in game["involved_companies"]:
