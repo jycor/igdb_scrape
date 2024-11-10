@@ -9,6 +9,7 @@ load_dotenv()
 
 LAST_GAME_ID = 321687 # as of 11/09/2024
 BATCH_SIZE = 500
+SEARCH_BATCH_SIZE = 10
 
 CLIENT_ID = os.getenv("CLIENT_ID")
 AUTHORIZATION = os.getenv("AUTHORIZATION")
@@ -53,7 +54,6 @@ def get_platforms():
         return
     print("PLATFORM QUERY:", PLATFORM_QUERY)
 
-
     time.sleep(DELAY)
     response = requests.post(PLATFORM_URL, headers=HEADERS, data=PLATFORM_QUERY)
     sorted_platforms = sorted(response.json(), key=lambda x: x["id"])
@@ -80,7 +80,7 @@ if os.path.exists("companies.pkl"):
 def get_company(id):
     if id in company_cache:
         return 0
-    query = COMPANY_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
+    query = COMPANY_QUERY.format(start=id, end=id + SEARCH_BATCH_SIZE, batch_size=SEARCH_BATCH_SIZE)
     print("COMPANY QUERY:", query)
 
     time.sleep(DELAY)
@@ -112,22 +112,27 @@ if os.path.exists("involved_companies.pkl"):
 
 def get_involved_company(id):
     if id in involved_company_cache:
-        return
-    query = INVOLVED_COMPANY_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
+        return 0
+    query = INVOLVED_COMPANY_QUERY.format(start=id, end=id + SEARCH_BATCH_SIZE, batch_size=SEARCH_BATCH_SIZE)
     print("INVOLVED COMPANY QUERY:", query)
 
+    time.sleep(DELAY)
     response = requests.post(INVOLVED_COMPANY_URL, headers=HEADERS, data=query)
     if response.status_code != 200:
         print("COMPANY QUERY FAILED WITH:", response.status_code)
         print(response.json())
-        return
+        return 1
     for company in response.json():
         involved_company_cache[company["id"]] = company
-        get_company(company["company"])
+        if "company" not in company:
+            continue
+        if get_company(company["company"]) == 1:
+            return 1
     
     with open("involved_companies.pkl", "wb") as f:
         pickle.dump(involved_company_cache, f)
         f.close()
+    return 0
 
 
 COVER_URL = "https://api.igdb.com/v4/covers"
@@ -151,7 +156,7 @@ if os.path.exists("covers.pkl"):
 def get_cover(id):
     if id in cover_cache:
         return 0
-    query = COVER_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
+    query = COVER_QUERY.format(start=id, end=id + SEARCH_BATCH_SIZE, batch_size=SEARCH_BATCH_SIZE)
     print("COVER QUERY:", query)
 
     time.sleep(DELAY)
@@ -180,6 +185,7 @@ def get_cover(id):
     with open("covers.pkl", "wb") as f:
         pickle.dump(cover_cache, f)
         f.close()
+    return 0
 
 GAME_URL = "https://api.igdb.com/v4/games"
 GAME_QUERY = """
@@ -210,14 +216,7 @@ def get_game_batch(start, end, batch_size=BATCH_SIZE):
         print(response.json())
         return None, 1
     
-    games = response.json()
-    games_cache.extend(games)
-    with open("games.pkl", "wb") as f:
-        pickle.dump(games_cache, f)
-        f.close()
-        
-    last_id = max([game["id"] for game in games])
-    return games, 0
+    return response.json(), 0
 
 # Get everything
 for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
@@ -226,11 +225,18 @@ for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
         print("FAILED TO GET BATCH")
         exit(1)
     for game in batch:
-        if get_cover(game["cover"]) == 1:
+        if "cover" in game and get_cover(game["cover"]) == 1:
             exit(1)
+        if "involved_companies" not in game:
+            continue
         for company in game["involved_companies"]:
             if get_involved_company(company) == 1:
                 exit(1)
+    games_cache.extend(batch)
+    with open("games.pkl", "wb") as f:
+        pickle.dump(games_cache, f)
+        f.close()
+    last_id = max([game["id"] for game in batch])
 
 # Export games
 print("Exporting {} games".format(len(games_cache)))

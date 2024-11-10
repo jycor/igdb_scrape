@@ -3,8 +3,8 @@ Follow instructions from [here](https://api-docs.igdb.com/#getting-started) to g
 
 Then, add them to `.env` file in the format:
 ```
-CLIENT_ID=your_client_id
-SECRET=your_secret
+CLIENT_ID="your_client_id"
+SECRET="your_secret"
 ```
 
 Run `python get_auth.py` to get the access token (it will be saved in `.env`).
