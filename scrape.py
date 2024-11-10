@@ -71,14 +71,14 @@ where id >= {start} & id < {end};
 limit {batch_size};
 """
 
-companyCache = {}
+company_cache = {}
 if os.path.exists("companies.pkl"):
     with open("companies.pkl", "rb") as f:
-        companyCache = pickle.load(f)
+        company_cache = pickle.load(f)
         f.close()
 
 def get_company(id):
-    if id in companyCache:
+    if id in company_cache:
         return
     query = COMPANY_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
     print("COMPANY QUERY:", query)
@@ -90,10 +90,10 @@ def get_company(id):
         print(response.json())
         return
     for company in response.json():
-        companyCache[company["id"]] = company["name"]
+        company_cache[company["id"]] = company["name"]
 
     with open("companies.pkl", "wb") as f:
-        pickle.dump(companyCache, f)
+        pickle.dump(company_cache, f)
         f.close()
 
 
@@ -104,14 +104,14 @@ where id >= {start} & id < {end};
 limit {batch_size};
 """
 
-involvedCompanyCache = {}
+involved_company_cache = {}
 if os.path.exists("involved_companies.pkl"):
     with open("involved_companies.pkl", "rb") as f:
-        involvedCompanyCache = pickle.load(f)
+        involved_company_cache = pickle.load(f)
         f.close()
 
 def get_involved_company(id):
-    if id in involvedCompanyCache:
+    if id in involved_company_cache:
         return
     query = INVOLVED_COMPANY_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
     print("INVOLVED COMPANY QUERY:", query)
@@ -122,11 +122,11 @@ def get_involved_company(id):
         print(response.json())
         return
     for company in response.json():
-        involvedCompanyCache[company["id"]] = company
+        involved_company_cache[company["id"]] = company
         get_company(company["company"])
     
     with open("involved_companies.pkl", "wb") as f:
-        pickle.dump(involvedCompanyCache, f)
+        pickle.dump(involved_company_cache, f)
         f.close()
 
 
@@ -142,14 +142,14 @@ if not os.path.exists("covers"):
     os.makedirs("covers")
 
 # Load Cache
-coverCache = set()
+cover_cache = set()
 if os.path.exists("covers.pkl"):
     with open("covers.pkl", "rb") as f:
-        coverCache = pickle.load(f)
+        cover_cache = pickle.load(f)
         f.close()
 
 def get_cover(id):
-    if id in coverCache:
+    if id in cover_cache:
         return
     query = COVER_QUERY.format(start=id, end=id + BATCH_SIZE, batch_size=BATCH_SIZE)
     print("COVER QUERY:", query)
@@ -161,9 +161,9 @@ def get_cover(id):
         print(response.json())
         return
     for cover in response.json():
-        if cover["id"] in coverCache:
+        if cover["id"] in cover_cache:
             continue
-        coverCache.add(cover["id"])
+        cover_cache.add(cover["id"])
 
         img_hash = cover["image_id"]
         img_url = COVER_DOWNLOAD_URL.format(img_hash)
@@ -178,7 +178,7 @@ def get_cover(id):
             f.close()
 
     with open("covers.pkl", "wb") as f:
-        pickle.dump(coverCache, f)
+        pickle.dump(cover_cache, f)
         f.close()
 
 GAME_URL = "https://api.igdb.com/v4/games"
@@ -188,8 +188,17 @@ where id > {start_id} & id <= {end_id};
 limit {batch_size};
 """
 
-all_games = []
+games_cache = []
+last_id = 0
+if os.path.exists("games.pkl"):
+    with open("games.pkl", "rb") as f:
+        games_cache = pickle.load(f)
+        f.close()
+    for game in games_cache:
+        last_id = max(last_id, game["id"])
+
 def get_game_batch(start, end, batch_size=BATCH_SIZE):
+    global last_id
     query = GAME_QUERY.format(start_id=start, end_id=end, batch_size=batch_size)
     print("GAME QUERY:", query)
 
@@ -200,11 +209,13 @@ def get_game_batch(start, end, batch_size=BATCH_SIZE):
         print(response.json())
         return
     games = response.json()
-    all_games.extend(response.json())
+    games_cache.extend(games)
+    last_id = max([game["id"] for game in games])
+
     return games
 
 # Get everything
-for i in range(0, LAST_GAME_ID, BATCH_SIZE):
+for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
     batch = get_game_batch(i, i+BATCH_SIZE)
     for game in batch:
         get_cover(game["cover"])
@@ -212,16 +223,16 @@ for i in range(0, LAST_GAME_ID, BATCH_SIZE):
             get_involved_company(company)
 
 # Export games
-print("Exporting {} games".format(len(all_games)))
+print("Exporting {} games".format(len(games_cache)))
 with open("games.json", "w") as f:
-    sorted_games = sorted(all_games, key=lambda x: x["id"])
-    json.dump(all_games, f, sort_keys=True)
+    sorted_games = sorted(games_cache, key=lambda x: x["id"])
+    json.dump(games_cache, f, sort_keys=True)
     f.close()
 
 # Export companies
 with open("company.json", "w") as f:
-    involvedCompanies = sorted(involvedCompanyCache.values(), key=lambda x: x["id"])
+    involvedCompanies = sorted(involved_company_cache.values(), key=lambda x: x["id"])
     for involvedCompany in involvedCompanies:
-        involvedCompany["name"] = companyCache[involvedCompany["company"]]
+        involvedCompany["name"] = company_cache[involvedCompany["company"]]
     json.dump(involvedCompanies, f, sort_keys=True)
     f.close()
