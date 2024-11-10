@@ -242,7 +242,7 @@ for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
 print("Exporting {} games".format(len(games_cache)))
 with open("games.json", "w") as f:
     sorted_games = sorted(games_cache, key=lambda x: x["id"])
-    json.dump(games_cache, f, sort_keys=True)
+    json.dump(sorted_games, f, sort_keys=True)
     f.close()
 
 # Export covers
