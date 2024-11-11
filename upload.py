@@ -51,5 +51,5 @@ def upload_platforms():
 # upload_games()
 # upload_companies()
 # upload_covers()
-upload_genres()
-upload_platforms()
+# upload_genres()
+# upload_platforms()
