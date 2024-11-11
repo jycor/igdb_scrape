@@ -32,6 +32,24 @@ def upload_covers():
         supabase.table("covers").upsert(data[i:i+1000]).execute()
 
 
+def upload_genres():
+    f = open("genres.json", "r")
+    data = json.load(f)
+    for i in range(0, len(data), 1000):
+        print("Upserting genres from {} to {}...".format(i, i+1000))
+        supabase.table("genres").upsert(data[i:i+1000]).execute()
+
+
+def upload_platforms():
+    f = open("platforms.json", "r")
+    data = json.load(f)
+    for i in range(0, len(data), 1000):
+        print("Upserting platforms from {} to {}...".format(i, i+1000))
+        supabase.table("platforms").upsert(data[i:i+1000]).execute()
+
+    
 # upload_games()
 # upload_companies()
 # upload_covers()
+upload_genres()
+upload_platforms()
