@@ -179,7 +179,6 @@ def get_cover(id):
         with open("covers/{}.jpg".format(img_hash), "wb") as f:
             f.write(img.content)
             f.close()
-        cover["img_hash"] = img_hash
         cover_cache[cover["id"]] = cover
 
     with open("covers.pkl", "wb") as f:
@@ -219,24 +218,24 @@ def get_game_batch(start, end, batch_size=BATCH_SIZE):
     return response.json(), 0
 
 # Get everything
-for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
-    batch, ok = get_game_batch(i, i+BATCH_SIZE)
-    if ok == 1:
-        print("FAILED TO GET BATCH")
-        exit(1)
-    for game in batch:
-        if "cover" in game and get_cover(game["cover"]) == 1:
-            exit(1)
-        if "involved_companies" not in game:
-            continue
-        for company in game["involved_companies"]:
-            if get_involved_company(company) == 1:
-                exit(1)
-    games_cache.extend(batch)
-    with open("games.pkl", "wb") as f:
-        pickle.dump(games_cache, f)
-        f.close()
-    last_id = max([game["id"] for game in batch])
+# for i in range(last_id, LAST_GAME_ID, BATCH_SIZE):
+#     batch, ok = get_game_batch(i, i+BATCH_SIZE)
+#     if ok == 1:
+#         print("FAILED TO GET BATCH")
+#         exit(1)
+#     for game in batch:
+#         if "cover" in game and get_cover(game["cover"]) == 1:
+#             exit(1)
+#         if "involved_companies" not in game:
+#             continue
+#         for company in game["involved_companies"]:
+#             if get_involved_company(company) == 1:
+#                 exit(1)
+#     games_cache.extend(batch)
+#     with open("games.pkl", "wb") as f:
+#         pickle.dump(games_cache, f)
+#         f.close()
+#     last_id = max([game["id"] for game in batch])
 
 # Export games
 print("Exporting {} games".format(len(games_cache)))
@@ -245,16 +244,16 @@ with open("games.json", "w") as f:
     json.dump(sorted_games, f, sort_keys=True)
     f.close()
 
-# Export covers
-with open("covers.json", "w") as f:
-    sorted_covers = sorted(cover_cache.values(), key=lambda x: x["id"])
-    json.dump(sorted_covers, f, sort_keys=True)
-    f.close()
+# # Export covers
+# with open("covers.json", "w") as f:
+#     sorted_covers = sorted(cover_cache.values(), key=lambda x: x["id"])
+#     json.dump(sorted_covers, f, sort_keys=True)
+#     f.close()
 
-# Export companies
-with open("companies.json", "w") as f:
-    sorted_companies = sorted(involved_company_cache.values(), key=lambda x: x["id"])
-    for company in sorted_companies:
-        company["name"] = company_cache[company["company"]]
-    json.dump(sorted_companies, f, sort_keys=True)
-    f.close()
+# # Export companies
+# with open("companies.json", "w") as f:
+#     sorted_companies = sorted(involved_company_cache.values(), key=lambda x: x["id"])
+#     for company in sorted_companies:
+#         company["name"] = company_cache[company["company"]]
+#     json.dump(sorted_companies, f, sort_keys=True)
+#     f.close()
