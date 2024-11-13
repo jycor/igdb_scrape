@@ -28,12 +28,10 @@ for game in games:
         involved_company_ids.add(involved_company)
 
 print("Total unique involved companies:", len(involved_company_ids))
-print("This should take about {} seconds...".format((len(involved_company_ids) * DELAY) / BATCH_SIZE))
+print("Estimated time {} seconds".format((len(involved_company_ids) * DELAY) / BATCH_SIZE))
 
 # Sort the ids
 involved_company_ids = sorted(list(involved_company_ids))
-
-# TODO: should implement some sort of multi-threading to speed up the process
 
 INVOLVED_COMPANY_URL = "https://api.igdb.com/v4/involved_companies"
 INVOLVED_COMPANY_QUERY = """
