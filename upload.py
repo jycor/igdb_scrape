@@ -24,6 +24,14 @@ def upload_companies():
         supabase.table("companies").upsert(data[i:i+1000]).execute()
 
 
+def upload_involved_companies():
+    f = open("involved_companies.json", "r")
+    data = json.load(f)
+    for i in range(0, len(data), 1000):
+        print("Upserting involved companies from {} to {}...".format(i, i+1000))
+        supabase.table("involved_companies").upsert(data[i:i+1000]).execute()
+
+
 def upload_covers():
     f = open("covers.json", "r")
     data = json.load(f)
@@ -49,7 +57,8 @@ def upload_platforms():
 
     
 # upload_games()
-# upload_companies()
+upload_involved_companies()
+upload_companies()
 # upload_covers()
 # upload_genres()
 # upload_platforms()
