@@ -13,7 +13,7 @@ def upload_games():
     data = json.load(f)
     for i in range(0, len(data), 1000):
         print("Upserting games from {} to {}...".format(i, i+1000))
-        supabase.table("games").upsert(data[i:i+1000]).execute()
+        supabase.table("games").upsert(data[i:i+1000], on_conflict="id", ignore_duplicates=True).execute()
 
 
 def upload_companies():
@@ -21,7 +21,7 @@ def upload_companies():
     data = json.load(f)
     for i in range(0, len(data), 1000):
         print("Upserting companies from {} to {}...".format(i, i+1000))
-        supabase.table("companies").upsert(data[i:i+1000]).execute()
+        supabase.table("companies").upsert(data[i:i+1000], on_conflict="id", ignore_duplicates=True).execute()
 
 
 def upload_involved_companies():
@@ -29,7 +29,7 @@ def upload_involved_companies():
     data = json.load(f)
     for i in range(0, len(data), 1000):
         print("Upserting involved companies from {} to {}...".format(i, i+1000))
-        supabase.table("involved_companies").upsert(data[i:i+1000]).execute()
+        supabase.table("involved_companies").upsert(data[i:i+1000], on_conflict="id", ignore_duplicates=True).execute()
 
 
 def upload_covers():
@@ -37,7 +37,7 @@ def upload_covers():
     data = json.load(f)
     for i in range(0, len(data), 1000):
         print("Upserting covers from {} to {}...".format(i, i+1000))
-        supabase.table("covers").upsert(data[i:i+1000]).execute()
+        supabase.table("covers").upsert(data[i:i+1000], on_conflict="id", ignore_duplicates=True).execute()
 
 
 def upload_genres():
@@ -57,8 +57,8 @@ def upload_platforms():
 
     
 # upload_games()
-upload_involved_companies()
-upload_companies()
-# upload_covers()
+# upload_involved_companies()
+# upload_companies()
+upload_covers()
 # upload_genres()
 # upload_platforms()
